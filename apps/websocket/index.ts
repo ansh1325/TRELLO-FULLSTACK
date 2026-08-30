@@ -6,7 +6,7 @@ import { WebSocketServer } from "ws";
 
 const  server=new WebSocketServer({port:3002})
 
-const USERS:any={
+const ROOMS:any={
 
 }
 
@@ -15,23 +15,41 @@ server.on("connection",(socket)=>{
         const parsedData=JSON.parse(data)
         if(parsedData.type==='join'){
             const boardId=parsedData.boardId
-            if(!USERS[boardId]){
-                USERS[boardId]=[]
+            if(!ROOMS[boardId]){
+                ROOMS[boardId]=[]
             }
             const newUserId=Math.random();
-            USERS[boardId].push({userId:newUserId,socket:socket})
-            for(let i=0;i<USERS[boardId].length;i++){
-                const user=USERS[boardId][i]
+            for(let i=0;i<ROOMS[boardId].length;i++){
+                const user=ROOMS[boardId][i]
                 user.socket.send(JSON.stringify({
                     type:"join",
                     userId:newUserId
                 }))
             }
+            
+            ROOMS[boardId].push({userId:newUserId,socket:socket})
 
+            
             socket.send(JSON.stringify({
                 type:"initial_state",
-                users:USERS.filter(u=>u.id!=newUserId).map(x=>x.id)
+                users:ROOMS.filter(u=>u.id!=newUserId).map(x=>x.id)
             }))
         }
     })
+
+    socket.on("close",()=>{
+
+        Object.entries(ROOMS).map(([roomId,users])=>{
+            const userExists=users.find(u=>u.socket==socket)
+            if(userExists){
+                users=users.filter(x=>x.socket==socket)
+                users.foreach(({socket})=>socket.send(JSON.stringify({
+                    type:"leave",
+                    userId:userExists.id
+                })))
+            }
+        })
+    }
+    )
+
 })
