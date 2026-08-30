@@ -27,6 +27,11 @@ server.on("connection",(socket)=>{
                     userId:newUserId
                 }))
             }
+
+            socket.send(JSON.stringify({
+                type:"initial_state",
+                users:USERS.filter(u=>u.id!=newUserId).map(x=>x.id)
+            }))
         }
     })
 })
