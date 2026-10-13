@@ -10,6 +10,7 @@ const ROOMS:any={
 
 }
 
+
 server.on("connection",(socket)=>{
     socket.on("message",(data)=>{
         const parsedData=JSON.parse(data)
@@ -32,7 +33,7 @@ server.on("connection",(socket)=>{
             
             socket.send(JSON.stringify({
                 type:"initial_state",
-                users:ROOMS.filter(u=>u.id!=newUserId).map(x=>x.id)
+                users:ROOMS[boardId].filter(u=>u.userId!=newUserId).map(x=>x.userId)
             }))
         }
     })
@@ -42,10 +43,10 @@ server.on("connection",(socket)=>{
         Object.entries(ROOMS).map(([roomId,users])=>{
             const userExists=users.find(u=>u.socket==socket)
             if(userExists){
-                users=users.filter(x=>x.socket==socket)
+                ROOMS[roomId]=ROOMS[roomId].filter(x=>x.socket!=socket)
                 users.foreach(({socket})=>socket.send(JSON.stringify({
                     type:"leave",
-                    userId:userExists.id
+                    userId:userExists.userId
                 })))
             }
         })
